@@ -1,0 +1,32 @@
+import yfinance as yf
+import pandas as pd
+import numpy as np
+from arch import arch_model
+
+ticker = "APO"
+start_date = "2024-01-01"
+end_date = "2025-09-18"
+
+stock_data = yf.download(ticker, start = start_date, end = end_date)
+returns = 100 * stock_data["Close"].pct_change().dropna()
+
+model = arch_model(returns, mean = "Zero", vol = "GARCH", p=1, q=1)
+results =model.fit(disp="off")
+print(results.summary())
+
+forecast_horizon = 5
+forecasts = results.forecast(horizon=forecast_horizon)
+print(forecasts.mean.iloc[-1])
+
+import matplotlib.pyplot as plt
+fig, ax = plt.subplots(2,1,figsize = (10,8))
+ax[0].plot(results.resid/results.conditional_volatility)
+ax[0].set_title("Standardized Residuals")
+ax[0].set_xlabel("Date")
+
+ax[1].plot(results.conditional_volatility)
+ax[1].set_title("Conditional Volatility")
+ax[1].set_xlabel("Date")
+
+plt.tight_layout()
+plt.show()
